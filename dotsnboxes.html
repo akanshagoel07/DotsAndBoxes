@@ -1,35 +1,40 @@
+
 <!DOCTYPE html>
 <html>
 
 <head>
     <meta charset="UTF-8">
-    <title>The Dots and Boxes Game</title>
+    <title>Dots and Boxes</title>
     <style></style>
 </head>
 
 <body>
     <script>
+        "use strict";
+
         // game parameters
+        const DELAY_AI = 0.5; // seconds for the computer to take its turn
         const DELAY_END = 2; // seconds until a new game starts
         const GRID_SIZE = 3; // number of rows (and columns)
-        const HEIGHT = 500; // pixels
-        const WIDTH = 500;
+        const HEIGHT = 550; // pixels
+        const WIDTH = 550;
         const CELL = 100; // size of cells (as well as left and right margin)
         const STROKE = 17; // stroke width
         const DOT = 17; // dot radius
         const MARGIN = 150; // top margin for score, names, etc.
 
+        // colours
         const COLOR_BOARD = "silver";
-        const COLOR_BORDER = "black";
+        const COLOR_BORDER = "grey";
         const COLOR_AI = "blue";
         const COLOR_HU = "red";
-        const COLOR_TIE = "grey";
+        const COLOR_TIE = "black";
 
         // text
         const TEXT_AI = "AI";
         const TEXT_HU = "Human";
         const TEXT_SIZE = 26;
-        const TEXT_TIE = "DRAW!";
+        const TEXT_TIE = "IT'S A DRAW!";
         const TEXT_WIN = "WINS!";
 
         // definitions
@@ -54,8 +59,8 @@
 
         // game variables
         var currentCells, playersTurn, squares;
-        var scoreAi, scoreHuman;
-        var timeEnd;
+        var scoreAi, scoreHu;
+        var timeAi, timeEnd;
 
         // start a new game
         newGame();
@@ -72,10 +77,11 @@
             drawSquares();
             drawGrid();
             drawScores();
+            minimax();
         }
 
         function click(/** @type {MouseEvent} */ ev) {
-            if (/*TODO !playersTurn ||*/ timeEnd > 0) {
+            if (!playersTurn || timeEnd > 0) {
                 return;
             }
             selectSide();
@@ -112,22 +118,22 @@
         }
 
         function drawScores() {
-            let colComp = COLOR_AI;
-            let colPlay = COLOR_HU;
-            drawText(TEXT_HU,  WIDTH * 0.25, MARGIN * 0.25, colPlay, TEXT_SIZE);
-            drawText(scoreHuman, WIDTH * 0.25, MARGIN * 0.6, colPlay, TEXT_SIZE * 2);
-            drawText(TEXT_AI, WIDTH * 0.75, MARGIN * 0.25, colComp, TEXT_SIZE);
-            drawText(scoreAi, WIDTH * 0.75, MARGIN * 0.6, colComp, TEXT_SIZE * 2);
+            let colorAi = COLOR_AI;
+            let colorHu = COLOR_HU;
+            drawText(TEXT_HU, WIDTH * 0.25, MARGIN * 0.25, colorHu, TEXT_SIZE);
+            drawText(scoreHu, WIDTH * 0.25, MARGIN * 0.6, colorHu, TEXT_SIZE * 2);
+            drawText(TEXT_AI, WIDTH * 0.75, MARGIN * 0.25, colorAi, TEXT_SIZE);
+            drawText(scoreAi, WIDTH * 0.75, MARGIN * 0.6, colorAi, TEXT_SIZE * 2);
 
             // game over text
             if (timeEnd > 0) {
                 timeEnd--;
 
                 // handle a tie
-                if (scoreAi == scoreHuman) {
-                    drawText(TEXT_TIE, WIDTH * 0.5, MARGIN * 0.5, COLOR_TIE, TEXT_SIZE);
+                if (scoreAi == scoreHu) {
+                    drawText(TEXT_TIE, WIDTH * 0.5, MARGIN * 0.6, COLOR_TIE, TEXT_SIZE);
                 } else {
-                    let playerWins = scoreHuman > scoreAi;
+                    let playerWins = scoreHu > scoreAi;
                     let color = playerWins ? COLOR_HU : COLOR_AI;
                     let text = playerWins ? TEXT_HU : TEXT_AI;
                     drawText(text, WIDTH * 0.5, MARGIN * 0.5, color, TEXT_SIZE);
@@ -156,7 +162,7 @@
             ctx.fillText(text, x, y);
         }
 
-        function getColor(player, light) {
+        function getColor(player) {
             if (player) {
                 return COLOR_HU;
             } else {
@@ -180,8 +186,110 @@
             return MARGIN + CELL * row;
         }
 
+        function getValidNeighbourSides(row, col) {
+            let sides = [];
+            let square = squares[row][col];
+
+            // check left
+            if (!square.sideLeft.selected) {
+                if (col == 0 || squares[row][col - 1].numSelected < 2) {
+                    sides.push(Side.LEFT);
+                }
+            }
+
+            // check right
+            if (!square.sideRight.selected) {
+                if (col == squares[0].length - 1 || squares[row][col + 1].numSelected < 2) {
+                    sides.push(Side.RIGHT);
+                }
+            }
+
+            // check top
+            if (!square.sideTop.selected) {
+                if (row == 0 || squares[row - 1][col].numSelected < 2) {
+                    sides.push(Side.TOP);
+                }
+            }
+
+            // check bottom
+            if (!square.sideBot.selected) {
+                if (row == squares.length - 1 || squares[row + 1][col].numSelected < 2) {
+                    sides.push(Side.BOTTOM);
+                }
+            }
+
+            return sides;
+        }
+
+        function minimax() {
+
+            if (playersTurn || timeEnd > 0) {
+                return;
+            }
+
+            // count down till computer makes a selection
+            if (timeAi > 0) {
+                timeAi--;
+                if (timeAi == 0) {
+                    selectSide();
+                }
+                return;
+            }
+
+            // set up the options array
+            let options = [];
+            options[0] = [];
+            options[1] = [];
+            options[2] = [];
+
+            // first priority - select a square that has 3 sides completed
+            // next priority - select a square that has 0 or 1 sides completed
+            // final priority - select a square that has 2 sides completed
+            for (let i = 0; i < squares.length; i++) {
+                for (let j = 0; j < squares[0].length; j++) {
+                    switch (squares[i][j].numSelected) {
+                        case 3: // first priority
+                            options[0].push({square: squares[i][j], sides: []});
+                            break;
+                        case 0: // second priority
+                        case 1:
+                            let sides = getValidNeighbourSides(i, j);
+                            let priority = sides.length > 0 ? 1 : 2;
+                            options[priority].push({square: squares[i][j], sides: sides});
+                            break;
+                        case 2: // third priority
+                            options[2].push({square: squares[i][j], sides: []});
+                            break;
+                    }
+                }
+            }
+
+            // randomly choose a square in priority order
+            let option;
+            if (options[0].length > 0) {
+                option = options[0][Math.floor(Math.random() * options[0].length)];
+            } else if (options[1].length > 0) {
+                option = options[1][Math.floor(Math.random() * options[1].length)];
+            } else if (options[2].length > 0) {
+                option = options[2][Math.floor(Math.random() * options[2].length)];
+            }
+
+            // randomly choose a valid side
+            let side = null;
+            if (option.sides.length > 0) {
+                side = option.sides[Math.floor(Math.random() * option.sides.length)];
+            }
+
+            // get the square's coordinates
+            let coords = option.square.getFreeSideCoords(side);
+            highlightSide(coords.x, coords.y);
+
+            // set up delay
+            timeAi = Math.ceil(DELAY_AI * 30);
+        }
+
         function highlightGrid(/** @type {MouseEvent} */ ev) {
-            if (/*TODO !playersTurn ||*/ timeEnd > 0) {
+            if (!playersTurn || timeEnd > 0) {
                 return;
             }
 
@@ -251,7 +359,7 @@
             currentCells = [];
             playersTurn = Math.random() >= 0.5;
             scoreAi = 0;
-            scoreHuman = 0;
+            scoreHu = 0;
             timeEnd = 0;
 
             // set up the squares
@@ -280,7 +388,7 @@
 
             // check for winner
             if (filledSquare) {
-                if (scoreHuman + scoreAi == GRID_SIZE * GRID_SIZE) {
+                if (scoreHu + scoreAi == GRID_SIZE * GRID_SIZE) {
                     // game over
                     timeEnd = Math.ceil(DELAY_END * 30);
                 }
@@ -295,16 +403,16 @@
             this.w = w;
             this.h = h;
             this.bot = y + h;
+            this.top = y;
             this.left = x;
             this.right = x + w;
-            this.top = y;
             this.highlight = null;
             this.numSelected = 0;
             this.owner = null;
             this.sideBot = {owner: null, selected: false};
+            this.sideTop = {owner: null, selected: false};
             this.sideLeft = {owner: null, selected: false};
             this.sideRight = {owner: null, selected: false};
-            this.sideTop = {owner: null, selected: false};
 
             this.contains = function(x, y) {
                 return x >= this.left && x < this.right && y >= this.top && y < this.bot;
@@ -318,11 +426,10 @@
                 // light background
                 ctx.fillStyle = getColor(this.owner, true);
                 ctx.fillRect(
-                    this.left + STROKE/2, this.top + STROKE/2,
-                    this.w - STROKE, this.h - STROKE
+                    this.left + STROKE, this.top + STROKE,
+                    this.w - STROKE * 2, this.h - STROKE * 2
                 );
 
-                
                 
             }
 
@@ -331,15 +438,16 @@
                     case Side.BOTTOM:
                         drawLine(this.left, this.bot, this.right, this.bot, color);
                         break;
+                    case Side.TOP:
+                        drawLine(this.left, this.top, this.right, this.top, color);
+                        break;
                     case Side.LEFT:
                         drawLine(this.left, this.top, this.left, this.bot, color);
                         break;
                     case Side.RIGHT:
                         drawLine(this.right, this.top, this.right, this.bot, color);
                         break;
-                    case Side.TOP:
-                        drawLine(this.left, this.top, this.right, this.top, color);
-                        break;
+                    
                 }
             }
 
@@ -354,38 +462,90 @@
                 if (this.sideBot.selected) {
                     this.drawSide(Side.BOTTOM, getColor(this.sideBot.owner, false));
                 }
+                if (this.sideTop.selected) {
+                    this.drawSide(Side.TOP, getColor(this.sideTop.owner, false));
+                }
                 if (this.sideLeft.selected) {
                     this.drawSide(Side.LEFT, getColor(this.sideLeft.owner, false));
                 }
                 if (this.sideRight.selected) {
                     this.drawSide(Side.RIGHT, getColor(this.sideRight.owner, false));
                 }
-                if (this.sideTop.selected) {
-                    this.drawSide(Side.TOP, getColor(this.sideTop.owner, false));
+                
+            }
+            
+            // return a random free side's coordinates
+            this.getFreeSideCoords = function(side) {
+                
+                // valid coordinates of each side
+                let coordsBottom = {x: this.left + this.w / 2, y: this.bot - 1};
+                let coordsTop = {x: this.left + this.w / 2, y: this.top};
+                let coordsLeft = {x: this.left, y: this.top + this.h / 2};
+                let coordsRight = {x: this.right - 1, y: this.top + this.h / 2};
+                
+
+                // get coordinates of given side
+                let coords = null;
+                switch (side) {
+                    case Side.BOTTOM:
+                        coords = coordsBottom;
+                        break;
+                    case Side.TOP:
+                        coords = coordsTop;
+                        break;
+                    case Side.LEFT:
+                        coords = coordsLeft;
+                        break;
+                    case Side.RIGHT:
+                        coords = coordsRight;
+                        break;
+                    
                 }
+
+                // return requested side's coordinates
+                if (coords != null) {
+                    return coords;
+                }
+
+                // otherwise choose a random free side
+                let freeCoords = [];
+                if (!this.sideBot.selected) {
+                    freeCoords.push(coordsBottom);
+                }
+                if (!this.sideTop.selected) {
+                    freeCoords.push(coordsTop);
+                }
+                if (!this.sideLeft.selected) {
+                    freeCoords.push(coordsLeft);
+                }
+                if (!this.sideRight.selected) {
+                    freeCoords.push(coordsRight);
+                }
+                
+                return freeCoords[Math.floor(Math.random() * freeCoords.length)];
             }
 
             this.highlightSide = function(x, y) {
 
                 // calculate the distances to each side
-                let dBot = this.bot - y;
-                let dLeft = x - this.left;
-                let dRight = this.right - x;
-                let dTop = y - this.top;
+                let disBottom = this.bot - y;
+                let disTop = y - this.top;
+                let disLeft = x - this.left;
+                let disRight = this.right - x;
 
                 // determine closest value
-                let dClosest = Math.min(dBot, dLeft, dRight, dTop);
+                let disClosest = Math.min(disBottom, disTop, disLeft, disRight);
 
                 // highlight the closest if not already selected
-                if (dClosest == dBot && !this.sideBot.selected) {
+                if (disClosest == disBottom && !this.sideBot.selected) {
                     this.highlight = Side.BOTTOM;
-                } else if (dClosest == dLeft && !this.sideLeft.selected) {
-                    this.highlight = Side.LEFT;
-                } else if (dClosest == dRight && !this.sideRight.selected) {
-                    this.highlight = Side.RIGHT;
-                } else if (dClosest == dTop && !this.sideTop.selected) {
+                }else if (disClosest == disTop && !this.sideTop.selected) {
                     this.highlight = Side.TOP;
-                }
+                } else if (disClosest == disLeft && !this.sideLeft.selected) {
+                    this.highlight = Side.LEFT;
+                } else if (disClosest == disRight && !this.sideRight.selected) {
+                    this.highlight = Side.RIGHT;
+                } 
 
                 // return the highlighted side
                 return this.highlight;
@@ -402,6 +562,10 @@
                         this.sideBot.owner = playersTurn;
                         this.sideBot.selected = true;
                         break;
+                    case Side.TOP:
+                        this.sideTop.owner = playersTurn;
+                        this.sideTop.selected = true;
+                        break;
                     case Side.LEFT:
                         this.sideLeft.owner = playersTurn;
                         this.sideLeft.selected = true;
@@ -410,10 +574,7 @@
                         this.sideRight.owner = playersTurn;
                         this.sideRight.selected = true;
                         break;
-                    case Side.TOP:
-                        this.sideTop.owner = playersTurn;
-                        this.sideTop.selected = true;
-                        break;
+                    
                 }
                 this.highlight = null;
 
@@ -424,7 +585,7 @@
 
                     // increment score
                     if (playersTurn) {
-                        scoreHuman++;
+                        scoreHu++;
                     } else {
                         scoreAi++;
                     }
