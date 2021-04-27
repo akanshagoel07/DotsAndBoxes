@@ -283,76 +283,7 @@ function highlightGrid(/** @type {MouseEvent} */ ev) {
     highlightSide(x, y);
 }
 
-function highlightSide(x, y) {
 
-    // clear previous highlighting
-    for (let row of squares) {
-        for (let square of row) {
-            square.highlight = null;
-        }
-    }
-
-    // check each cell
-    let rows = squares.length;
-    let cols = squares[0].length;
-    currentCells = [];
-    OUTER: for (let i = 0; i < rows; i++) {
-        for (let j = 0; j < cols; j++) {
-            if (squares[i][j].contains(x, y)) {
-
-                // highlight current
-                let side = squares[i][j].highlightSide(x, y);
-                if (side != null) {
-                    currentCells.push({row: i, col: j});
-                }
-
-                // determine neighbour
-                let row = i, col = j, highlight, neighbour = true;
-                if (side == Side.LEFT && j > 0) {
-                    col = j - 1;
-                    highlight = Side.RIGHT;
-                } else if (side == Side.RIGHT && j < cols - 1) {
-                    col = j + 1;
-                    highlight = Side.LEFT;
-                } else if (side == Side.TOP && i > 0) {
-                    row = i - 1;
-                    highlight = Side.BOTTOM;
-                } else if (side == Side.BOTTOM && i < rows - 1) {
-                    row = i + 1;
-                    highlight = Side.TOP;
-                } else {
-                    neighbour = false;
-                }
-
-                // highlight neighbour
-                if (neighbour) {
-                    squares[row][col].highlight = highlight;
-                    currentCells.push({row: row, col: col});
-                }
-
-                // no need to continue
-                break OUTER;
-            }
-        }
-    }
-}
-
-function newGame() {
-    currentCells = [];
-    playersTurn = Math.random() >= 0.5;
-    scoreAi = 0;
-    scoreHu = 0;
-    timeEnd = 0;
-
-    // set up the squares
-    squares = [];
-    for (let i = 0; i < GRID_SIZE; i++) {
-        squares[i] = [];
-        for (let j = 0; j < GRID_SIZE; j++) {
-            squares[i][j] = new Square(getGridX(j), getGridY(i), CELL, CELL);
-        }
-    }
-}
 
 function selectSide() {
     if (currentCells == null || currentCells.length == 0) {
