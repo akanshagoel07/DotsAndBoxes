@@ -1,12 +1,12 @@
 // game parameters
 const DELAY_AI = 0.5; // seconds for the computer to take its turn
 const DELAY_END = 2; // seconds until a new game starts
-const GRID_SIZE = 3; // number of rows (and columns)
-const HEIGHT = 550; // pixels
-const WIDTH = 550;
+const GRID_SIZE = 6; // number of rows (and columns)
+const HEIGHT = 850; // pixels
+const WIDTH = 800;
 const CELL = 100; // size of cells (as well as left and right margin)
 const STROKE = 17; // stroke width
-const DOT = 17; // dot radius
+const DOT = 15; // dot radius
 const MARGIN = 150; // top margin for score, names, etc.
 
 // colours
