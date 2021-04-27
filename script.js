@@ -284,6 +284,22 @@ function highlightGrid(/** @type {MouseEvent} */ ev) {
 }
 
 
+function newGame() {
+    currentCells = [];
+    playersTurn = Math.random() >= 0.5;
+    scoreAi = 0;
+    scoreHu = 0;
+    timeEnd = 0;
+
+    // set up the squares
+    squares = [];
+    for (let i = 0; i < GRID_SIZE; i++) {
+        squares[i] = [];
+        for (let j = 0; j < GRID_SIZE; j++) {
+            squares[i][j] = new Square(getGridX(j), getGridY(i), CELL, CELL);
+        }
+    }
+}
 
 function selectSide() {
     if (currentCells == null || currentCells.length == 0) {
