@@ -13,7 +13,7 @@ Description: This is our model of dots and boxes game. We built this game using
 // game parameters
 const DELAY_AI = 0.5; // seconds for the computer to take its turn
 const DELAY_END = 2; // seconds until a new game starts
-const GRID_SIZE = 2; // number of rows (and columns)
+const GRID_SIZE = 6; // number of rows (and columns)
 const HEIGHT = 850; // pixels
 const WIDTH = 800;
 const CELL = 100; // size of cells (as well as left and right margin)
