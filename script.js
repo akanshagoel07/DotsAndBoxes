@@ -21,14 +21,14 @@ const STROKE = 17; // stroke width
 const DOT = 15; // dot radius
 const MARGIN = 150; // top margin for score, names, etc.
 
-// colours
+// colors to parameters
 const COLOR_BOARD = "silver";
 const COLOR_BORDER = "grey";
 const COLOR_AI = "blue";
 const COLOR_HU = "red";
 const COLOR_TIE = "black";
 
-// text
+// text to parameters
 const TEXT_AI = "AI";
 const TEXT_HU = "Human";
 const TEXT_SIZE = 26;
