@@ -1,7 +1,20 @@
+/* 
+==========================================================================================
+Group Name: Search and Game playing (Group 4)
+Members: Afnan Alkhamis, Vibhavi Jayasinghe
+Date: 04/27/2021
+Description: This is our model of dots and boxes game. We built this game using
+            Javascript, HTML and CSS. 
+            For this project we used a couple of sources to build this game using minimax. 
+            Resources: https://www.youtube.com/watch?v=vAeysIanWTw&t=265s
+                        https://www.youtube.com/watch?v=HMCQ4OAhsl4
+==========================================================================================
+*/
+
 button{
   position: absolute;
   top: 3%;
-  left: 45%;  
+  left: 65%;  
   border: hsla(342, 71%, 3%, 0.493);
   color: rgb(124, 122, 122);
   padding: 8px 20px;

@@ -1,7 +1,19 @@
+/* 
+==========================================================================================
+Group Name: Search and Game playing (Group 4)
+Members: Afnan Alkhamis, Vibhavi Jayasinghe
+Date: 04/27/2021
+Description: This is our model of dots and boxes game. We built this game using
+            Javascript, HTML and CSS. 
+            For this project we used a couple of sources to build this game using minimax. 
+            Resources: https://www.youtube.com/watch?v=vAeysIanWTw&t=265s
+                        https://www.youtube.com/watch?v=HMCQ4OAhsl4
+==========================================================================================
+*/
 // game parameters
 const DELAY_AI = 0.5; // seconds for the computer to take its turn
 const DELAY_END = 2; // seconds until a new game starts
-const GRID_SIZE = 6; // number of rows (and columns)
+const GRID_SIZE = 2; // number of rows (and columns)
 const HEIGHT = 850; // pixels
 const WIDTH = 800;
 const CELL = 100; // size of cells (as well as left and right margin)
@@ -58,6 +70,15 @@ canv.addEventListener("click", click);
 // set up the game loop
 setInterval(loop, 1000 / 30);
 
+/* 
+==========================================================================================
+Function    : loop
+Parameters  : 
+Return      : 
+Description : This function will loop and draw the board, grids, scorese and squares and
+                update the scores until the end of the game
+==========================================================================================
+*/
 function loop() {
     drawBoard();
     drawSquares();
@@ -73,11 +94,30 @@ function click(/** @type {MouseEvent} */ ev) {
     selectSide();
 }
 
+/* 
+=============================================================================================
+Function    : drawBoard, drawSquares, drawDot, drawGrid, drawLine, drawText
+Parameters  : 
+Return      : 
+Description : These functions will draw the board with game parameters, draw the squares,
+                draw the dots on the board, draw the grids and draw the lines in betwwen 
+                the dots, and darw the text, respectively
+=============================================================================================
+*/
 function drawBoard() {
     ctx.fillStyle = COLOR_BOARD;
     ctx.strokeStyle = COLOR_BORDER;
     ctx.fillRect(0, 0, WIDTH, HEIGHT);
     ctx.strokeRect(STROKE / 2, STROKE / 2, WIDTH - STROKE, HEIGHT - STROKE);
+}
+
+function drawSquares() {
+    for (let row of squares) {
+        for (let square of row) {
+            square.drawSides();
+            square.drawFill();
+        }
+    }
 }
 
 function drawDot(x, y) {
@@ -103,6 +143,21 @@ function drawLine(x0, y0, x1, y1, color) {
     ctx.stroke();
 }
 
+function drawText(text, x, y, color, size) {
+    ctx.fillStyle = color;
+    ctx.font = size + 'px Varela Round';
+    ctx.fillText(text, x, y);
+}
+
+/* 
+==========================================================================================
+Function    : drawScores
+Parameters  : 
+Return      : 
+Description : This function will draw the scores of AI and Human on top of the board
+                when the game is finish this will shows the result either draw or wins
+==========================================================================================
+*/
 function drawScores() {
     let colorAi = COLOR_AI;
     let colorHu = COLOR_HU;
@@ -115,7 +170,7 @@ function drawScores() {
     if (timeEnd > 0) {
         timeEnd--;
 
-        // handle a tie
+        // if the game is a tie
         if (scoreAi == scoreHu) {
             drawText(TEXT_TIE, WIDTH * 0.5, MARGIN * 0.6, COLOR_TIE, TEXT_SIZE);
         } else {
@@ -129,21 +184,16 @@ function drawScores() {
     }
 }
 
-function drawSquares() {
-    for (let row of squares) {
-        for (let square of row) {
-            square.drawSides();
-            square.drawFill();
-        }
-    }
-}
-
-function drawText(text, x, y, color, size) {
-    ctx.fillStyle = color;
-    ctx.font = size + "px dejavu sans mono";
-    ctx.fillText(text, x, y);
-}
-
+/* 
+==========================================================================================
+Function    : getColor, getText, getGridX, getGridY
+Parameters  : 
+Return      : 
+Description : These functions will give specific colors to each of the players, after win
+                or draw this will show the text on the board with the players color,
+                get the colomns of the board as x axis and rows and y axis.
+==========================================================================================
+*/
 function getColor(player) {
     if (player) {
         return COLOR_HU;
@@ -168,6 +218,14 @@ function getGridY(row) {
     return MARGIN + CELL * row;
 }
 
+/* 
+==========================================================================================
+Function    : getValidNeighbourSides
+Parameters  : row, col
+Return      : sides
+Description : This function will validate the current cell's all 4 sides and return them
+==========================================================================================
+*/
 function getValidNeighbourSides(row, col) {
     let sides = [];
     let square = squares[row][col];
@@ -203,6 +261,16 @@ function getValidNeighbourSides(row, col) {
     return sides;
 }
 
+/* 
+==========================================================================================
+Function    : minimax
+Parameters  : 
+Return      : 
+Description : This function will checks which best line to draw for next round for AI and
+                draws it. 
+                Source for minimax algorithm: https://www.youtube.com/watch?v=HMCQ4OAhsl4
+==========================================================================================
+*/
 function minimax() {
 
     if (playersTurn || timeEnd > 0) {
@@ -224,22 +292,19 @@ function minimax() {
     options[1] = [];
     options[2] = [];
 
-    // first priority - select a square that has 3 sides completed
-    // next priority - select a square that has 0 or 1 sides completed
-    // final priority - select a square that has 2 sides completed
     for (let i = 0; i < squares.length; i++) {
         for (let j = 0; j < squares[0].length; j++) {
             switch (squares[i][j].numSelected) {
-                case 3: // first priority
+                case 3:
                     options[0].push({square: squares[i][j], sides: []});
                     break;
-                case 0: // second priority
+                case 0:
                 case 1:
                     let sides = getValidNeighbourSides(i, j);
                     let priority = sides.length > 0 ? 1 : 2;
                     options[priority].push({square: squares[i][j], sides: sides});
                     break;
-                case 2: // third priority
+                case 2: 
                     options[2].push({square: squares[i][j], sides: []});
                     break;
             }
@@ -336,8 +401,14 @@ function highlightSide(x, y) {
     }
 }
 
-
-
+/* 
+==========================================================================================
+Function    : newGmae
+Parameters  : 
+Return      : 
+Description : This function will open a new game with new board and zero scores.
+==========================================================================================
+*/
 function newGame() {
     currentCells = [];
     playersTurn = Math.random() >= 0.5;
