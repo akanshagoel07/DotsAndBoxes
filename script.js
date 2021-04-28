@@ -11,15 +11,15 @@ Description: This is our model of dots and boxes game. We built this game using
 ==========================================================================================
 */
 // game parameters
-const DELAY_AI = 0.5; // seconds for the computer to take its turn
-const DELAY_END = 2; // seconds until a new game starts
-const GRID_SIZE = 6; // number of rows (and columns)
-const HEIGHT = 850; // pixels
+const DELAY_AI = 0.5; 
+const DELAY_END = 2; 
+const GRID_SIZE = 6; 
+const HEIGHT = 850; 
 const WIDTH = 800;
-const CELL = 100; // size of cells (as well as left and right margin)
-const STROKE = 17; // stroke width
-const DOT = 15; // dot radius
-const MARGIN = 150; // top margin for score, names, etc.
+const CELL = 100; 
+const STROKE = 17; 
+const DOT = 15; 
+const MARGIN = 150;
 
 // colors to parameters
 const COLOR_BOARD = "silver";
